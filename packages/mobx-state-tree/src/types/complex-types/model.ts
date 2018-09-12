@@ -592,7 +592,6 @@ export class ModelType<S extends ModelProperties, T> extends ComplexType<any, an
         }
         return snapshot
     }
-
     applySnapshotPostProcessor(snapshot: any) {
         const postProcessor = this.postProcessor
         if (postProcessor) return postProcessor.call(null, snapshot)
@@ -721,12 +720,17 @@ export function compose(...args: any[]): any {
             if (!isType(type)) fail("expected a mobx-state-tree type, got " + type + " instead")
         })
     }
+
     return (args as ModelType<any, any>[])
         .reduce((prev, cur) =>
             prev.cloneAndEnhance({
                 name: prev.name + "_" + cur.name,
-                properties: cur.properties,
-                initializers: cur.initializers
+                properties: cur.properties || prev.properties,
+                initializers: cur.initializers,
+                preProcessor: (snapshot: any) =>
+                    cur.applySnapshotPreProcessor(prev.applySnapshotPreProcessor(snapshot)),
+                postProcessor: (snapshot: any) =>
+                    cur.applySnapshotPostProcessor(prev.applySnapshotPostProcessor(snapshot))
             })
         )
         .named(typeName)

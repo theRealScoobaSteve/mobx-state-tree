@@ -1,3 +1,4 @@
+import { getSnapshot } from "../../src/core/mst-operations"
 import {
     types,
     getSnapshot,
@@ -351,40 +352,34 @@ if (process.env.NODE_ENV !== "production") {
         )
     })
 }
-test("it should type compose correctly", () => {
-    const Car = types
+test.only("it should type compose correctly", () => {
+    const CompositionTracker = types
         .model({
-            wheels: 3
+            composedOf: types.array(types.string)
         })
-        .actions(self => {
-            let connection = (null as any) as Promise<any>
-            function drive() {}
-            function afterCreate() {
-                connection = Promise.resolve(true)
-            }
-            return {
-                drive,
-                afterCreate
-            }
+        .preProcessSnapshot(snapshot => ({
+            ...snapshot,
+            composedOf: (snapshot.composedOf || []).concat("CompositionTracker")
+        }))
+    const Car = types.model({}).preProcessSnapshot(snapshot => ({
+        ...snapshot,
+        composedOf: (snapshot.composedOf || []).concat("Car")
+    }))
+    const Logger = types.model({}).preProcessSnapshot(snapshot => ({
+        ...snapshot,
+        composedOf: (snapshot.composedOf || []).concat("Logger")
+    }))
+    const LoggableCar = types
+        .compose(
+            CompositionTracker,
+            Car,
+            Logger
+        )
+        .props({
+            composedOf: types.array(types.string)
         })
-    const Logger = types
-        .model({
-            logNode: "test"
-        })
-        .actions(self => {
-            function log(msg: string) {}
-            return {
-                log
-            }
-        })
-    const LoggableCar = types.compose(
-        Car,
-        Logger
-    )
-    const x = LoggableCar.create({ wheels: 3, logNode: "test" /* compile error: x: 7  */ })
-    // x.test() // compile error
-    x.drive()
-    x.log("z")
+    const x = LoggableCar.create({})
+    expect(x.composedOf).toEqual(expect.arrayContaining(["CompositionTracker", "Logger", "Car"]))
 })
 test("it should extend types correctly", () => {
     const Car = types
