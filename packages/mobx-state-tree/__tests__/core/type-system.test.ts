@@ -352,7 +352,7 @@ if (process.env.NODE_ENV !== "production") {
         )
     })
 }
-test.only("it should type compose correctly", () => {
+test("it should type compose correctly", () => {
     const CompositionTracker = types
         .model({
             composedOf: types.array(types.string)
