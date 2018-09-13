@@ -379,7 +379,9 @@ test.only("it should type compose correctly", () => {
             composedOf: types.array(types.string)
         })
     const x = LoggableCar.create({})
-    expect(x.composedOf).toEqual(expect.arrayContaining(["CompositionTracker", "Logger", "Car"]))
+    expect(x.composedOf).toContain("CompositionTracker")
+    expect(x.composedOf).toContain("Logger")
+    expect(x.composedOf).toContain("Car")
 })
 test("it should extend types correctly", () => {
     const Car = types
